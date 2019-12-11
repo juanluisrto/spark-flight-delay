@@ -1,10 +1,12 @@
 package example
 
+import org.apache.spark.ml.regression.LinearRegression
 import org.apache.spark.sql.types.IntegerType
 import org.apache.spark.sql.{SQLContext, SparkSession}
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.functions.expr
+
 import scala.io.Source
 
 object Hello {
@@ -34,7 +36,7 @@ object Hello {
 
     // Dropping variables
     val dropped_dataset = dataset
-      //.limit(250)
+      .limit(250)
       // Removing the forbidden variables
       .drop("ArrTime")
       .drop("ActualElapsedTime")
@@ -53,7 +55,7 @@ object Hello {
       .drop("Cancelled")
       .drop("CancellationCode")
 
-    // We transform DepTime to integer
+    // We transform DepTime, CRSDepTime and CRSArrTime to integer
     val expressionDepTime = "(60*((DepTime - (DepTime%100))/100))+(DepTime%100)"
     val expressionCRSDepTime = "(60*((CRSDepTime - (CRSDepTime%100))/100))+(CRSDepTime%100)"
     val expressionCRSArrTime = "(60*((CRSArrTime - (CRSArrTime%100))/100))+(CRSArrTime%100)"
@@ -78,10 +80,28 @@ object Hello {
 
     println("Rows number before duplication removal" + typed_dataset.count())
 
-    val cleaned_dataset = typed_dataset
-      .dropDuplicates()
+   // val cleaned_dataset = typed_dataset.dropDuplicates()
 
-    println("Rows number before duplication removal" + cleaned_dataset.count())
+    //println("Rows number before duplication removal" + cleaned_dataset.count())
+
+
+
+    //Linear Regression
+    //https://scalac.io/scala-spark-ml-machine-learning-introduction/#pipelines
+    val lr = new LinearRegression()
+      .setMaxIter(10)
+      .setRegParam(0.3)
+      .setElasticNetParam(0.8)
+      .setStandardization(true)
+      //.labelCol( "MV")
+      //.featuresCol//("features")
+
+
+    // Fit the model
+    val lrModel = lr.fit(typed_dataset)
+
+    // Print the coefficients and intercept for linear regression
+    println(s"Coefficients: ${lrModel.coefficients} Intercept: ${lrModel.intercept}")
 
     spark.stop()
   }
