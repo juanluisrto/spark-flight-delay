@@ -5,14 +5,19 @@ import org.apache.spark.sql.{SQLContext, SparkSession}
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.functions.expr
-
+import scala.io.Source
 
 object Hello {
 
 
   def main(args: Array[String]): Unit = {
-    val path = "D:/Dataset/2008.csv.bz2"
-    //
+
+    // Each one can have its own path in the path.txt file, which should not be synced with git.
+    val textIterator : Iterator[String] = Source.fromResource("path").getLines()
+    val path = textIterator.next()
+    //val path = "D:/Dataset/2008.csv.bz2"
+
+
     val conf = new SparkConf().setAppName("predictor")
 
     val spark = SparkSession
@@ -21,6 +26,7 @@ object Hello {
       .config("spark.master", "local")
       .master("local")
       .getOrCreate()
+
 
     // Take a look to diverted and cancelled variables
     val dataset = spark.read.format("csv").option("header", "true").load(path)
