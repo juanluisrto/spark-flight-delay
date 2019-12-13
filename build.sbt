@@ -13,10 +13,10 @@ lazy val root = (project in file("."))
     libraryDependencies += sparkMLlib
   )
 
-javaOptions in run ++= Seq(
+/*javaOptions in run ++= Seq(
   "-Dlog4j.debug=false",
   "-Dlog4j.configuration=log4j.properties")
-outputStrategy := Some(StdoutOutput)
+outputStrategy := Some(StdoutOutput)*/
 
 
 // See https://www.scala-sbt.org/1.x/docs/Using-Sonatype.html for instructions on how to publish to Sonatype.
