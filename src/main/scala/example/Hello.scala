@@ -22,8 +22,10 @@ object Hello extends Serializable {
           .master("local")
           .getOrCreate()
 
+        val textIterator : Iterator[String] = Source.fromResource("path").getLines()
+        val path = textIterator.next()
         // Take a look to diverted and cancelled variables
-        val dataset = spark.read.format("csv").option("header", "true").load("D:/Dataset/2008.csv.bz2")
+        val dataset = spark.read.format("csv").option("header", "true").load(path)
         // var dataset = spark.read.format("csv").option("header","true").option("inferSchema","true").load(path)
 
         // Dropping variables
