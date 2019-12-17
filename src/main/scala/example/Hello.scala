@@ -25,30 +25,24 @@ object Hello extends Serializable {
 
     val textIterator: Iterator[String] = Source.fromResource("path").getLines()
     val path = textIterator.next()
+
     // Take a look to diverted and cancelled variables
     val dataset = spark.read.format("csv").option("header", "true").load(path)
-    // var dataset = spark.read.format("csv").option("header","true").option("inferSchema","true").load(path)
+
+    // Flights diverted or cancelled should not be in the dataset
+    val dataset_filtered = dataset.filter("(Cancelled=0) AND (Diverted=0)" )
 
     // Dropping variables
-    val dropped_dataset = dataset
+    val dropped_dataset = dataset_filtered
       .limit(250)
       // Removing the forbidden variables
-      .drop("ArrTime")
-      .drop("ActualElapsedTime")
-      .drop("AirTime")
-      .drop("TaxiIn")
-      .drop("Diverted")
-      .drop("CarrierDelay")
-      .drop("WeatherDelay")
-      .drop("NASDelay")
-      .drop("SecurityDelay")
-      .drop("LateAircraftDelay")
-      // Tail Number: is an identifier, so it is not going to be useful.
+      .drop("ArrTime","ActualElapsedTime","ActualElapsedTime","AirTime","TaxiIn","Diverted","CarrierDelay","WeatherDelay","NASDelay","SecurityDelay","LateAircraftDelay")
+      // Year: is always the same for each dataset.
       .drop("Year")
-      .drop("FlightNum")
-      .drop("TailNum")
-      .drop("Cancelled")
-      .drop("CancellationCode")
+      // Identifiers must be removed.
+      .drop("FlightNum","TailNum")
+      // Cancelled flights must be removed
+      .drop("Cancelled","CancellationCode")
 
     // We transform DepTime, CRSDepTime and CRSArrTime to integer
     val expressionDepTime = "(60*((DepTime - (DepTime%100))/100))+(DepTime%100)"
