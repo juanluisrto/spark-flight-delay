@@ -1,11 +1,12 @@
 package example
 
 import org.apache.spark
-import org.apache.spark.ml.feature.VectorAssembler
+import org.apache.spark.ml.Pipeline
+import org.apache.spark.ml.feature.{OneHotEncoderEstimator, StringIndexer, VectorAssembler}
 import org.apache.spark.ml.regression.LinearRegression
 import org.apache.spark.sql.SparkSession
 
-object Example extends Serializable {
+object Example {
 
   def main(args: Array[String]): Unit = {
     val spark = SparkSession
@@ -15,25 +16,36 @@ object Example extends Serializable {
       .getOrCreate()
     import spark.implicits._
 
-    val df = Seq((-3.0965012, 5.2371198, -0.7370271),
-      (-0.2100299, -0.7810844, -1.3284768),
-      (8.3525083, 5.3337562, 21.8897181),
-      (-3.0380369, 6.5357180, 0.3469820),
-      (5.9354651, 6.0223208, 17.9566144),
-      (-6.8357707, 5.6629804, -8.1598308),
-      (8.8919844, -2.5149762, 15.3622538),
-      (6.3404984, 4.1778706, 16.7931822))
-      .toDF("x1", "x2", "y")
-
+    val df = Seq((-3.0965012, 5.2371198, "casa", -0.7370271),
+      (-0.2100299, -0.7810844,"edificio", -1.3284768),
+      (8.3525083, 5.3337562,"colegio", 21.8897181),
+      (-3.0380369, 6.5357180,"casa", 0.3469820),
+      (5.9354651, 6.0223208,"edificio", 17.9566144),
+      (-6.8357707, 5.6629804,"colegio", -8.1598308),
+      (8.8919844, -2.5149762,"casa", 15.3622538),
+      (6.3404984, 4.1778706,"colegio", 16.7931822))
+      .toDF("x1", "x2","xc", "y")
 
     val assembler = new VectorAssembler()
-      .setInputCols(Array("x1", "x2"))
+      .setInputCols(Array("x1", "x2", "xc"))
       .setOutputCol("features")
-      .setHandleInvalid("skip")
 
-    val output = assembler.transform(df)
-    //assembler.transform(df)
-    output.show(truncate = false)
+    val categorical_features = Array("xc")
+
+    val stringIndexer = categorical_features.map { categorical_variable_name =>
+      // VariableName would be changed to VariableName_Index
+      new StringIndexer()
+        .setInputCol(categorical_variable_name)
+        .setOutputCol(categorical_variable_name + "_Index")
+        .setHandleInvalid("skip")
+    }
+
+    val oneHotEncoder = categorical_features.map { categorical_variable_name =>
+      new OneHotEncoderEstimator()
+        .setInputCols(Array(categorical_variable_name + "_Index"))
+        .setOutputCols(Array(categorical_variable_name + "_vec"))
+        .setDropLast(false)
+    }
 
     val lr = new LinearRegression()
       .setFeaturesCol("features")
@@ -41,8 +53,16 @@ object Example extends Serializable {
       .setMaxIter(10)
       .setElasticNetParam(0.8)
 
-    val lrModel = lr.fit(output)
+    // Pipeline
+    val encoder_pipeline = new Pipeline().setStages(stringIndexer ++ oneHotEncoder ++ Array(assembler,lr))
 
+    val indexer_model = encoder_pipeline.fit(df)
+    val df_transformed = indexer_model.transform(df)
+
+    println("Aquí estaría el transformado")
+    df_transformed.show()
+
+    val lrModel = lr.fit(df)
     println(s"Coefficients: ${lrModel.coefficients}")
     println(s"Intercept: ${lrModel.intercept}")
     val trainingSummary = lrModel.summary
@@ -52,7 +72,4 @@ object Example extends Serializable {
     println(s"RMSE: ${trainingSummary.rootMeanSquaredError}")
     println(s"r2: ${trainingSummary.r2}")
   }
-
-
 }
-
