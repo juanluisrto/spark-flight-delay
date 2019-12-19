@@ -11,7 +11,7 @@ import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.functions.expr
 
-object Hello extends Serializable {
+object aarivalDelayPredictor extends Serializable {
   def main(args: Array[String]): Unit = {
 
     println("BIG DATA: Arrival Delay Predictor")
@@ -74,7 +74,7 @@ object Hello extends Serializable {
 
     // Dropping variables
     val dropped_dataset = dataset_filtered
-      .limit(250)
+      //.limit(250)
       // Removing the forbidden variables
       .drop("ArrTime", "ActualElapsedTime", "ActualElapsedTime", "AirTime", "TaxiIn", "Diverted", "CarrierDelay", "WeatherDelay", "NASDelay", "SecurityDelay", "LateAircraftDelay")
       // Year: is always the same for each dataset.
@@ -176,7 +176,7 @@ object Hello extends Serializable {
         val rmse = evaluator.evaluate(predictions)
         println(s"Root Mean Squared Error (RMSE) on test data = $rmse")
 
-      // Classification Tree
+      // Classification Forest
       case 2 =>
         val rf = new RandomForestRegressor()
           .setLabelCol("ArrDelay")
@@ -203,6 +203,7 @@ object Hello extends Serializable {
 
         val rmse = evaluator.evaluate(predictions)
         println(s"Root Mean Squared Error (RMSE) on test data = $rmse")
+
     }
 
     spark.stop()
