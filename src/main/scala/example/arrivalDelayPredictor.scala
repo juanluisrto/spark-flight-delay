@@ -11,7 +11,7 @@ import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.functions.expr
 
-object aarivalDelayPredictor extends Serializable {
+object arrivalDelayPredictor extends Serializable {
   def main(args: Array[String]): Unit = {
 
     println("BIG DATA: Arrival Delay Predictor")
